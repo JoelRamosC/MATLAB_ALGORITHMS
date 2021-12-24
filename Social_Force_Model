@@ -1,0 +1,119 @@
+%Obtenção do volume espaço temporal gerado
+[im, u, v, macroDat] = getSavedFlow(2,'TestLK'); %aoenas para saber o tamanho
+[uby ubx]=size(u);
+v_save=ones(uby,ubx,macroDat.nofFrames);
+u_save=ones(uby,ubx,macroDat.nofFrames);
+
+for fr = 2:macroDat.nofFrames 
+  [im, u, v] = getSavedFlow(fr,'TestLK');
+  %set(hIm,'CData',im);
+  v_save(:,:,fr)=v;
+  u_save(:,:,fr)=u;
+end
+
+flow_mag= sqrt(v_save.^2 + u_save.^2); %Magnitude do vector de of from u e v
+
+%Filtro de média
+for i=1:macroDat.nofFrames
+    flow_mag_filter(:,:,i)=imfilter(flow_mag(:,:,i),3);
+    subplot(2,1,1)
+    imcontour(flow_mag(:,:,i))
+    subplot(2,1,2)
+    imcontour(flow_mag_filter(:,:,i))
+    pause(0.0000000001)
+end
+
+save('mag_uv_OF_5MF.mat','flow_mag_filter')
+
+%Histograma
+% for i=210:310
+%         u=u_save(:,:,i);
+%         histogram(u)
+%         axis([-2 2 0 5])
+%         pause(0.5);
+% end
+
+%Cálculo das forças de interação
+%dw/dt=O(xi_new)]t - O(xi_new)(t-1)  
+for frame=2:macroDat.nofFrames
+    for i=1:200
+        for j=1:200
+            dw_u(i,j,frame)=u_save(i,j,frame)-u_save(i,j,frame-1);
+            dw_v(i,j,frame)=v_save(i,j,frame)-v_save(i,j,frame-1);
+        end
+    end
+end
+
+%O(xi_new)
+for frame=1:macroDat.nofFrames
+    for i=1:200
+        for j=1:200
+            u_med(i,j,frame)=u_save(i,j,frame);
+            v_med(i,j,frame)=u_save(i,j,frame); 
+        end   
+    end
+end
+
+% Oavg(xi_new)
+for i=1:200
+    for j=1:200
+        sum_u=0;
+        sum_v=0;
+        for frame=1:macroDat.nofFrames
+            sum_u= sum_u + u_save(i,j,frame);
+            sum_v= sum_v + v_save(i,j,frame);
+        end
+        Oavg_u(i,j)=sum_u/macroDat.nofFrames;
+        Oavg_v(i,j)=sum_v/macroDat.nofFrames;
+    end
+end
+     
+%Fint
+for frame=1:macroDat.nofFrames
+    for i=1:200
+        for j=1:200
+           Fint_u(i,j,frame)=dw_u(i,j,frame)-(u_med(i,j,frame) - Oavg_u(i,j));
+           Fint_v(i,j,frame)=dw_v(i,j,frame)-(v_med(i,j,frame) - Oavg_v(i,j));
+        end
+    end
+end
+
+%Módulo 
+for frame=1:macroDat.nofFrames
+    for i=1:200
+        for j=1:200
+            u_mod=Fint_u(i,j,frame);
+            v_mod=Fint_v(i,j,frame);
+            mag_uv_SFM(i,j,frame)=sqrt(u_mod^2+v_mod^2);
+        end
+    end    
+end
+
+save('mag_uv_SFM_5MF.mat','mag_uv_SFM')
+
+% load('v_save.mat')
+
+% close all
+% for i=400:macroDat.nofFrames
+%     subplot(2,1,1)
+%     %quiver(u_med(:,:,i),v_med(:,:,i))
+%     %quiver(Oavg_u,Oavg_v)
+%     %quiver(dw_u(:,:,i),dw_v(:,:,i))
+%     quiver(Fint_u(:,:,i),Fint_v(:,:,i))
+%     axis ([0 200 0 200])
+%     subplot(2,1,2)
+%     quiver(u_save(:,:,i),v_save(:,:,i))
+%     axis ([0 200 0 200])
+%     pause(0.0000001)
+% end
+
+
+for i=1:macroDat.nofFrames
+  subplot(2,1,1)
+  imagesc(mag_uv_SFM(:,:,i))  
+  subplot(2,1,2)
+  imagesc(flow_mag(:,:,10)) 
+  pause(0.01)
+end
+
+
