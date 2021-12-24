@@ -1,0 +1,62 @@
+P1=[2*ones(1,100);3*ones(1,100)]; 
+for col=1:100
+    for lin=1:2
+        P1(lin,col)=P1(lin,col)+P1(lin,col)*(0.5-rand())/5;
+    end
+end
+scatter(P1(1,:),P1(2,:)) 
+hold on
+P2=[2*ones(1,100);5*ones(1,100)];
+for col=1:100
+    for lin=1:2
+        P2(lin,col)=P2(lin,col)+P2(lin,col)*(0.5-rand())/5;
+    end
+end
+scatter(P2(1,:),P2(2,:))
+
+P3=[4*ones(1,100);4*ones(1,100)];
+for col=1:100
+    for lin=1:2
+        P3(lin,col)=P3(lin,col)+P3(lin,col)*(0.5-rand())/5;
+    end
+end
+scatter(P3(1,:),P3(2,:))
+
+P4=[6*ones(1,100);3*ones(1,100)];
+for col=1:100
+    for lin=1:2
+        P4(lin,col)=P4(lin,col)+P4(lin,col)*(0.5-rand())/5;
+    end
+end
+scatter(P4(1,:),P4(2,:))
+
+P5=[4*ones(1,100);7*ones(1,100)];
+for col=1:100
+    for lin=1:2
+        P5(lin,col)=P5(lin,col)+P5(lin,col)*(0.5-rand())/5;
+    end
+end
+scatter(P5(1,:),P5(2,:))
+
+
+P=[P1 P2 P3 P4 P5];
+P_test=[P1(:,1:30) P2(:,1:30) P3(:,1:30) P4(:,1:30) P5(:,1:30)];
+
+
+%Bactérias
+P=[x_registro ; 100*estoque_registro];
+scatter(P(1,:),P(2,:))
+P_test=[(0.5-rand()/2)*x_registro; 100*(0.5-rand()/2)*estoque_registro];
+scatter(P_test(1,:),P_test(2,:))
+
+P=[x_registro ; 10*ponto_medio];
+scatter(P(1,:),P(2,:))
+P_test=[(0.5-rand()/5)*x_registro; 10*(0.5-rand()/5)*ponto_medio];
+scatter(P_test(1,:),P_test(2,:))
+
+P=[x_registro ; 10*ponto_medio ;100*estoque_registro];
+scatter(P(1,:),P(2,:))
+P_test=[(0.5-rand()/20)*x_registro; 10*(0.5-rand()/20)*ponto_medio ; 100*(0.5-rand()/20)*estoque_registro];
+scatter(P_test(1,:),P_test(2,:))
+
+
