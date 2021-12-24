@@ -1,0 +1,259 @@
+a = arduino('com10','Nano');
+
+temp1= [readVoltage(a, 'A0')*15];
+temp2= [readVoltage(a, 'A0')*15];
+
+%Leitor apenas
+for i=1:4000000
+    for j=1:5
+        temp2(j)= readVoltage(a, 'A0')*15;
+    end
+    temp_media = mean(temp2);
+    temp1= [temp1 (temp_media+temp1(end))/2];
+    pause(0.00001)
+    grid on
+    plot((1:length(temp1)),temp1,'r')
+    grid on
+end
+
+temp1= [readVoltage(a, 'A1')*10 readVoltage(a, 'A1')*10];
+
+for i=1:450
+        temp1= [temp1 ((readVoltage(a, 'A1')*10)+temp1(end))/2];
+        figure (1)
+        grid on
+        plot((1:length(temp1)),temp1'r')
+        grid on
+        
+        i
+        pause(0.00000000000001)
+    end    
+        min=min(temp1+temp2);
+        max=max(temp1+temp2);
+        c_a=5/(max-min);
+        c_l=5-c_a*max;
+while (true) 
+    for i=1:2000
+        if (c_a*(temp1(end)+temp2(end))+c_l < 5) && (c_a*(temp1(end)+temp2(end))+c_l > 0)
+            writePWMVoltage(a,'D5',abs(c_a*(temp1(end)+temp2(end))+c_l));
+            writePWMVoltage(a,'D6',abs(c_a*(temp1(end)+temp2(end))+c_l));            
+        end
+        temp1= [temp1 ((readVoltage(a, 'A1')*10)+temp1(end))/2];
+        temp2= [temp2 ((readVoltage(a, 'A2')*10)+temp2(end))/2];
+         if abs(temp1(end)-temp1(end-1))>1
+            temp1(end)=temp1(end-1);
+        end
+         if abs(temp2(end)-temp2(end-1))>1
+            temp2(end)=temp2(end-1);
+         end
+        
+         temp3= [temp3 ((readVoltage(a, 'A3')*10)+temp3(end))/2];
+         temp4= [temp4 ((readVoltage(a, 'A4')*10)+temp4(end))/2];
+         if abs(temp3(end)-temp3(end-1))>1
+            temp3(end)=temp3(end-1);
+        end
+         if abs(temp4(end)-temp4(end-1))>1
+            temp4(end)=temp4(end-1);
+         end
+        figure (1)
+        grid on
+        plot((1:length(temp1)),temp1+temp2,'r')
+        grid on
+        
+        figure (2)
+        grid on
+        plot((1:length(temp3)),temp3+temp4,'b')
+        grid on
+        i
+        pause(0.00000000000001)
+    end
+end
+
+
+for i=1:4000000
+    
+%     if (i== 50)
+%         sistema_inicializado= audioread('sistema_inicializado.mp3');
+%         sound(sistema_inicializado,Fs)
+%     end
+%     
+%     if (i== 100)
+%         bem_vindos= audioread('bem_vindos_a_academia.mp3');
+%         sound(bem_vindos,Fs)
+%     end
+%     
+%     if (i== 200)
+%         meu_nome_lilith= audioread('meu_nome_lilith.mp3');
+%         sound(meu_nome_lilith,Fs)
+%     end
+%     
+%      
+%     if (i== 280)
+%         modulos_complementares= audioread('modulos_complementares.mp3');
+%         sound(modulos_complementares,Fs)
+%     end
+%     
+%     if (i== 450)
+%         recebendo_dados= audioread('recebendo_dados.mp3');
+%         sound(recebendo_dados,Fs)
+%     end
+%     rec=mod(i,160);
+%     if (rec== 0)
+%         absorvendo_padroes= audioread('absorvendo_padroes.mp3');
+%         sound(absorvendo_padroes,Fs)
+%     end
+    
+    temp1= [temp1 ((readVoltage(a, 'A1')*10)+temp1(end))/2];
+    temp2= [temp2 ((readVoltage(a, 'A2')*10)+temp2(end))/2];
+    pause(0.001)
+    
+    if temp1(end)> mean(temp1)
+        writeDigitalPin(a,'D2',1);
+    else
+        writeDigitalPin(a,'D2',0);
+    end
+    grid on
+    plot((1:length(temp1)),temp1+temp2,'r')
+    grid on
+    %plot((1:length(temp1)),temp1,'r',(1:length(temp2)),temp2,'b')
+    
+end
+
+% for i=1:800000
+%     
+%     temp1= [temp1 ((readVoltage(a, 'A1')*20)+temp1(end)+temp1(end-1))/3];
+%     temp2= [temp2 ((readVoltage(a, 'A2')*20)+temp2(end)+temp2(end-1))/3];
+%     temp3= [temp3 ((readVoltage(a, 'A3')*20)+temp3(end)+temp3(end-1))/3];
+%     %temp4= [temp4 ((readVoltage(a, 'A4')*20)+temp4(end)+temp4(end-1))/3];
+%     pause(0.1)
+%     %plot((1:length(temp1)),temp1,'r',(1:length(temp2)),temp2,'b',(1:length(temp3)),temp3,'k')
+%     %plot((1:length(temp1)),temp1,'r',(1:length(temp2)),temp2,'b',(1:length(temp3)),temp3,'k',(1:length(temp4)),temp4,'g')
+%         ax1 = subplot(3,1,1);
+%         plot((1:length(temp3)),temp3,'r')
+%         title('Nome 1')
+%         
+%         ax2 =subplot(3,1,2);
+%         plot((1:length(temp2)),temp2,'b')
+%         title('Nome 2')
+%         
+%         ax3 = subplot(3,1,3);
+%         plot((1:length(temp1)),temp1,'k')
+%         title('Nome 3')
+%         grid(ax1,'on')
+%         grid(ax1,'minor')
+%         grid(ax2,'on')
+%         grid(ax2,'minor')
+%         grid(ax3,'on')
+%         grid minor
+%     end
+%     %plot((1:length(temp1)),temp1,'r',(1:length(temp2)),temp2,'b')
+%     
+% end
+
+save('Assinatura_Respiratória_Thalita_1chakra_4_10_2018.mat')
+save('Assinatura_Respiratória_Ana_28_09_2018.mat')
+
+for ii=1:1
+audio_numero(135,n,Fs)
+end
+[centena, dezena, unidade] = audio_numero(123,n,Fs);
+
+temp1= [readVoltage(a, 'A1')*10 readVoltage(a, 'A1')*10];
+temp2= [readVoltage(a, 'A2')*10 readVoltage(a, 'A2')*10];
+for i=1:350
+        temp1= [temp1 ((readVoltage(a, 'A1')*10)+temp1(end))/2];
+        temp2= [temp2 ((readVoltage(a, 'A2')*10)+temp2(end))/2];
+        if abs(temp1(end)-temp1(end-1))>1
+            temp1(end)=temp1(end-1);
+        end
+         if abs(temp2(end)-temp2(end-1))>1
+            temp2(end)=temp2(end-1);
+        end
+        
+        grid on
+        plot((1:length(temp1)),temp1+temp2,'r')
+        grid on
+        i
+        pause(0.00000000000001)
+       
+    end    
+        min=min(temp1+temp2);
+        max=max(temp1+temp2);
+        c_a=5/(max-min);
+        c_l=5-c_a*max;
+while (true) 
+    for i=1:2000
+        if (c_a*(temp1(end)+temp2(end))+c_l < 5) && (c_a*(temp1(end)+temp2(end))+c_l > 0)
+            writePWMVoltage(a,'D3',abs(c_a*(temp1(end)+temp2(end))+c_l));
+            writePWMVoltage(a,'D5',abs(c_a*(temp1(end)+temp2(end))+c_l));
+            writePWMVoltage(a,'D6',abs(c_a*(temp1(end)+temp2(end))+c_l));
+        end
+        temp1= [temp1 ((readVoltage(a, 'A1')*10)+temp1(end))/2];
+        temp2= [temp2 ((readVoltage(a, 'A2')*10)+temp2(end))/2];
+         if abs(temp1(end)-temp1(end-1))>1
+            temp1(end)=temp1(end-1);
+        end
+         if abs(temp2(end)-temp2(end-1))>1
+            temp2(end)=temp2(end-1);
+        end
+        grid on
+        plot((1:length(temp1)),temp1+temp2,'r')
+        grid on
+        i
+        pause(0.00000000000001)
+    end
+        
+%     for i=27:3:255
+%         writePWMVoltage(a,'D3',i/52);
+%         temp1= [temp1 ((readVoltage(a, 'A1')*10)+temp1(end))/2];
+%         temp2= [temp2 ((readVoltage(a, 'A2')*10)+temp2(end))/2];
+%         grid on
+%         plot((1:length(temp1)),temp1+temp2,'r')
+%         grid on
+%         i
+%         pause(0.00000000000001)
+%     end
+%     for i=27:3:255
+%         writePWMVoltage(a,'D3',(255-i)/52);
+%         temp1= [temp1 ((readVoltage(a, 'A1')*10)+temp1(end))/2];
+%         temp2= [temp2 ((readVoltage(a, 'A2')*10)+temp2(end))/2];
+%         grid on
+%         plot((1:length(temp1)),temp1+temp2,'r')
+%         grid on
+%         i
+%         pause(0.00000000000001)
+%     end
+%     for i=1:50
+%         writePWMVoltage(a,'D3',0);
+%         temp1= [temp1 ((readVoltage(a, 'A1')*10)+temp1(end))/2];
+%         temp2= [temp2 ((readVoltage(a, 'A2')*10)+temp2(end))/2];
+%         grid on
+%         plot((1:length(temp1)),temp1+temp2,'r')
+%         grid on
+%         i
+%         pause(0.00000000000001)
+%     end
+end
+        
+
+
+
+for p=1:100
+    for i=1:3:255
+        writePWMVoltage(a,'D3',i/52);
+        i
+    end
+    for i=1:2:255
+        writePWMVoltage(a,'D3',(255.1-i)/52);
+        255.1-i
+    end
+    writePWMVoltage(a,'D3',0);
+    pause(3)
+end
+
+
+% aumento de atividade metabólica comparativa a média
+% diminuição de atividade metabólica em comparacao a média
+% frequencia de _ respirações por minutos
+% mudança repentina no padrão respiratório
+% nivel de eficiencia respiratória comparativa _
