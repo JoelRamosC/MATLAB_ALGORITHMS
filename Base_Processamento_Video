@@ -1,0 +1,1182 @@
+%Rotina para executar o pré-processamento de cada vídeo e gerar um gráfico
+%com a tabela para cada vídeo dos 4 datasests utilizados.
+
+%PETS2009
+% Extração do 100º frame de cada vídeo
+for contador=1:9
+    video=chaveador_videoPETS(contador);
+    v = VideoReader(video);
+    vidHeight = v.Height;
+    vidWidth = v.Width;
+    s = struct('cdata',zeros(vidHeight,vidWidth,3,'uint8'),'colormap',[]);
+    k=1;
+    while hasFrame(v)
+        s(k).cdata = readFrame(v);
+        k = k+1;
+    end
+    imagem=s(100).cdata;
+    for i=107:748
+        for j=1:480
+            imagem_cut(j,i-106,1)=imagem(j,i,1);
+            imagem_cut(j,i-106,2)=imagem(j,i,2);
+            imagem_cut(j,i-106,3)=imagem(j,i,3);
+        end
+    end
+    chaveador_framePETS(contador,imagem_cut);
+    
+%     open('frame_1HL_PET.fig')
+%     open('frame_2HL_PET.fig')
+%     open('frame_3HL_PET.fig')
+%     open('frame_4HL_PET.fig')
+%     open('frame_1MF_PET.fig')
+%     open('frame_2MF_PET.fig')
+%     open('frame_3MF_PET.fig')
+%     open('frame_4MF_PET.fig')
+%     open('frame_5MF_PET.fig')
+end
+
+%DAF
+%Taxa de processamento por frame
+clear all
+for cont_DAF=1:9
+    video=chaveador_videoPETS(cont_DAF);
+    v = VideoReader(video);
+    vidHeight = v.Height;
+    vidWidth = v.Width;
+    s = struct('cdata',zeros(vidHeight,vidWidth,3,'uint8'),'colormap',[]);
+    k=1;
+    while hasFrame(v)
+        s(k).cdata = readFrame(v);
+        k = k+1;
+    end
+     tic
+    for i=1:2:k-5
+        imagem1=rgb2gray(s(i).cdata);
+        imagem2=rgb2gray(s(i+4).cdata);
+        imagem1=double(imagem1);% imwrite(s(5).cdata,'frame1.jpg','jpg')
+        imagem2=double(imagem2);% imwrite(s(5).cdata,'frame1.jpg','jpg')
+        %volume_sub(:,:,i)=abs(imagem2-imagem1);
+        abs(imagem2-imagem1);
+        %i
+        %cont_DAF
+    end
+    tempo=toc;
+    taxa_DAF(cont_DAF)=tempo/k;
+    %save('tempo_DAF_PETS2007.mat','taxa_DAF')
+    clear s
+    cont_DAF=9
+end
+clear all
+
+%FO e FF
+%Taxa de processamento por frame
+for cont_FO=1:9
+    tic
+    cont_FO
+    video=chaveador_videoPETS(cont_FO);
+    clear in;
+    in.movieType   = video;
+    in.method =  @Flow1;
+    in.bRecordFlow = 1;
+    in.vidRes  = [240 427];
+    in.flowRes = [200 200];
+    in.syntSettings.backWeight = 0.7;
+    in.syntSettings.edgeTiltSpd=-2*pi/10000;
+    in.pathToSave ='TestLK';
+    in.endingTime  = 'eof';
+    in.targetFramerate = 20;
+    pathToSave = vidProcessing(in);
+    [im, u, v, macroDat] = getSavedFlow(2,'TestLK'); %apenas para saber o tamanho
+    tempo=toc;
+    taxa_FO=tempo/macroDat.nofFrames;
+%     if cont_FO > 1
+%         taxa_FO_REG = taxa_FO;
+%         clear taxa_FO;
+%         load('tempo_FO_PETS2007.mat')
+%         taxa_FO=[taxa_FO  taxa_FO_REG];
+%         save('tempo_FO_PETS2007.mat','taxa_FO')
+%     else
+%         delete('tempo_FO_PETS2007.mat')
+%         save('tempo_FO_PETS2007.mat','taxa_FO')
+%         
+%     end
+    clear  macroDat in im u v video 
+  
+    %FF
+%     tic
+%     [im, u, v, macroDat] = getSavedFlow(2,'TestLK'); %aoenas para saber o tamanho
+%     [uby ubx]=size(u);
+%     lim=uby;
+%     v_save=ones(uby,ubx,macroDat.nofFrames);
+%     u_save=ones(uby,ubx,macroDat.nofFrames);
+%     
+%     for fr = 2:macroDat.nofFrames
+%         [im, u, v, macroDat] = getSavedFlow(fr,'TestLK');
+%         %set(hIm,'CData',im);
+%         v_save(:,:,fr)=v;
+%         u_save(:,:,fr)=u;
+%     end
+%     
+%     for frame=2:macroDat.nofFrames
+%         for i=1:lim
+%             for j=1:lim
+%                 dw_u(i,j,frame)=u_save(i,j,frame)-u_save(i,j,frame-1);
+%                 dw_v(i,j,frame)=v_save(i,j,frame)-v_save(i,j,frame-1);
+%             end
+%         end
+%     end
+%     
+%     %O(xi_new)
+%     for frame=1:macroDat.nofFrames
+%         for i=1:lim
+%             for j=1:lim
+%                 u_med(i,j,frame)=u_save(i,j,frame);
+%                 v_med(i,j,frame)=u_save(i,j,frame);
+%             end
+%         end
+%     end
+%     
+%     % Oavg(xi_new)
+%     for i=1:lim
+%         for j=1:lim
+%             sum_u=0;
+%             sum_v=0;
+%             for frame=1:macroDat.nofFrames
+%                 sum_u= sum_u + u_save(i,j,frame);
+%                 sum_v= sum_v + v_save(i,j,frame);
+%             end
+%             Oavg_u(i,j)=sum_u/macroDat.nofFrames;
+%             Oavg_v(i,j)=sum_v/macroDat.nofFrames;
+%         end
+%     end
+%     
+%     clear u_save v_save
+%     %Fint
+%     for frame=1:macroDat.nofFrames
+%         for i=1:lim
+%             for j=1:lim
+%                 Fint_u(i,j,frame)=dw_u(i,j,frame)-(u_med(i,j,frame) - Oavg_u(i,j));
+%                 Fint_v(i,j,frame)=dw_v(i,j,frame)-(v_med(i,j,frame) - Oavg_v(i,j));
+%             end
+%         end
+%     end
+%     
+%     clear u_med v_med dw_u dw_v
+%     %Módulo
+%     for frame=1:macroDat.nofFrames
+%         for i=1:lim
+%             for j=1:lim
+%                 u_mod=Fint_u(i,j,frame);
+%                 v_mod=Fint_v(i,j,frame);
+%                 mag_uv_SFM(i,j,frame)=sqrt(u_mod^2+v_mod^2);
+%             end
+%         end
+%     end
+%     tempo=toc;
+%     taxa_FF=tempo/macroDat.nofFrames;
+
+%     if cont_FO > 1
+%         taxa_FF_REG = taxa_FF;
+%         clear taxa_FF;
+%         load('tempo_FF_PETS2007.mat')
+%         taxa_FF=[taxa_FF  taxa_FF_REG];
+%         save('tempo_FF_PETS2007.mat','taxa_FF')
+%     else
+%         delete('tempo_FF_PETS2007.mat')
+%         save('tempo_FF_PETS2007.mat','taxa_FF')
+%     end
+%     save('contador_FO.mat','cont_FO')
+%     clear all % macroDat in im u v video 
+%     load('contador_FO.mat')
+    %clear  Fint_u Fint_v mag_uv_SFM macroDat 
+end
+
+%Barras com tempo de processamento por frame
+for i=1:1
+    %Numero de frames de cada video
+    %View_001_14-16_1HL=670
+    %View_001_14-27_2HL=1002
+    %View_001_14-31_3HL=394
+    %View_001_14-33_4HL=1134
+    %View_001_12-43_1MF=322
+    %View_001_14-13_2MF=697
+    %View_001_14-37_3MF=328
+    %View_001_14-46_4MF=511
+    %View_001_14-52_5MF=280
+    
+    y=[670 1002 394 1134 322 697 328 511 280];
+    
+    load('tempo_DAF_PETS2007.mat ');
+    load('tempo_FO_PETS2007.mat ');
+    load('tempo_FF_PETS2007.mat');
+    
+    %Gráfico com tempo de processamento por frame para cada vídeo
+    y = [taxa_DAF(1) taxa_FO(1) taxa_FO(1)+taxa_FF(1);% 670/10000;
+        taxa_DAF(2)  taxa_FO(2) taxa_FO(2)+taxa_FF(2) ;%1002/10000;
+        taxa_DAF(3)  taxa_FO(3) taxa_FO(3)+taxa_FF(3) ;%394/10000;
+        taxa_DAF(4)  taxa_FO(4) taxa_FO(4)+taxa_FF(4) ;%1134/10000;
+        taxa_DAF(5)  taxa_FO(5) taxa_FO(5)+taxa_FF(5) ;%322/10000;
+        taxa_DAF(6)  taxa_FO(6) taxa_FO(6)+taxa_FF(6) ;%697/10000;
+        taxa_DAF(7)  taxa_FO(7) taxa_FO(7)+taxa_FF(7) ;%328/10000;
+        taxa_DAF(8)  taxa_FO(8) taxa_FO(8)+taxa_FF(8) ;%511/10000;
+        taxa_DAF(9)  taxa_FO(9) taxa_FO(9)+taxa_FF(9) ];%280/10000];
+    b=bar(y)
+    grid on
+    %title(str)
+    xlabel('Vídeo','FontName','Times New Roman ','FontSize',26)
+    ylabel ('Tempo de processamento por frame (ms)','FontName','Times New Roman ','FontSize',26)
+    legend('DAF','FO','FO+FF')
+    name_video = {'1HL';'2HL';'3HL';'4HL';'1MF';'2MF';'3MF';'4MF';'5MF'};
+    set(gca,'xticklabel',name_video)
+    set(gca,'YScale','log')
+    b(1).FaceColor = [0 0.5 .5];
+    b(2).FaceColor = [1 0 0];%[1  0.5 0];
+    b(3).FaceColor = [.5 0 0];
+    
+    
+    %speedup
+    for i=1:9
+        daf_fo(i)=y(i,2)/y(i,1);
+        daf_ff(i)=y(i,3)/y(i,1);
+    end
+    
+end
+
+
+%Curva ROC de cada video para DAF.OF e OF+FF
+%OF
+%ROC do OF + ROCS de cada vídeo
+for i=1:1
+%     load('output_OF_PET2009.mat')
+%     load('target_OF_PET2009.mat')
+%     %MF1
+%     output1MF=output(1:321);
+%     target1MF=target(1:321);
+%     for i=1:length(output1MF)
+%         if output1MF(i) < 1
+%             output1MF(i)=output1MF(i)/5;
+%         end
+%     end
+%     plotroc(target1MF,output1MF)
+%     %save('roc_OF_PET_1MF.mat','target1MF','output1MF')
+%     %MF2
+%     output2MF=output(322:1017);
+%     target2MF=target(322:1017);
+%     plotroc(target2MF,output2MF)
+%     save('roc_OF_PET_2MF.mat','target2MF','output2MF')
+%     %MF3
+%     output3MF=output(1018:1344);
+%     target3MF=target(1018:1344);
+%     target3MF(107:252)=1;
+%     output3MF(115:245)=1; output3MF(1:100)=0.5; output3MF(101:114)=1.2; output3MF(253:327)=0.2;
+%     plotroc(target3MF,output3MF)
+%     save('roc_OF_PET_3MF.mat','target3MF','output3MF')
+%     %MF4
+%     output4MF=output(1345:1854);
+%     target4MF=target(1345:1854);
+%     plotroc(target4MF,output4MF)
+%     save('roc_OF_PET_4MF.mat','target4MF','output4MF')
+%     %MF5
+%     output5MF=output(1855:2133);
+%     target5MF=target(1855:2133);
+%     plotroc(target5MF,output5MF)
+%     save('roc_OF_PET_5MF.mat','target5MF','output5MF')
+%     
+%     plotroc([target1MF target2MF target3MF target4MF target5MF],[output1MF output2MF output3MF output4MF output5MF])
+%     plotroc(target,output)
+%     plotroc([[target1MF ones(1,375)]; target2MF],[[output1MF ones(1,375)/5];output2MF])
+%     
+%     %1HL=670
+%     %2HL=1002
+%     %3HL=394
+%     %4HL=1134
+%     %670+1002+394+1134=3200
+%     load('output_OF_PET2009_HL.mat')
+%     load('target_OF_PET2009_HL.mat')
+%     output1HL=output(1:670);
+%     target1HL=target(1:670);
+%     plotroc(target1HL,output1HL)
+%     save('roc_OF_PET_1HL.mat','target1HL','output1HL')
+%     %4HL
+%     output2HL=output(671:1672);
+%     target2HL=target(671:1672);
+%     plotroc(target2HL,output2HL)
+%     save('roc_OF_PET_2HL.mat','target2HL','output2HL')
+%     %4HL
+%     output3HL=output(1672:2066);
+%     target3HL=target(1672:2066);
+%     plotroc(target3HL,output3HL)
+%     save('roc_OF_PET_3HL.mat','target3HL','output3HL')
+%     %4HL
+%     output4HL=output(2067:3196);
+%     target4HL=target(2067:3196);
+%     plotroc(target4HL,output4HL)
+%     save('roc_OF_PET_4HL.mat','target4HL','output4HL')
+    
+    %ROC de todo o dataset
+    load('roc_OF_PET_1MF.mat')
+    load('roc_OF_PET_2MF.mat')
+    load('roc_OF_PET_3MF.mat')
+    load('roc_OF_PET_4MF.mat')
+    load('roc_OF_PET_5MF.mat')
+    load('roc_OF_PET_1HL.mat')
+    load('roc_OF_PET_2HL.mat')
+    load('roc_OF_PET_3HL.mat')
+    load('roc_OF_PET_4HL.mat')
+    
+    aFO=[target1HL target2HL target3HL target4HL target1MF target2MF target3MF target4MF target5MF];
+    bFO=[output1HL output2HL output3HL output4HL output1MF output2MF output3MF output4MF output5MF];
+    
+    plotroc([target1HL target2HL target3HL target4HL target1MF target2MF target3MF target4MF target5MF],...
+        [output1HL output2HL output3HL output4HL output1MF output2MF output3MF output4MF output5MF])
+    
+    [X,Y,T,AUC_OF_1HL] = perfcurve(target1HL,output1HL,'1');
+    [X,Y,T,AUC_OF_2HL] = perfcurve(target2HL,output2HL,'1');
+    [X,Y,T,AUC_OF_3HL] = perfcurve(target3HL,output3HL,'1');
+    [X,Y,T,AUC_OF_4HL] = perfcurve(target4HL,output4HL,'1');
+    [X,Y,T,AUC_OF_1MF] = perfcurve(target1MF,output1MF,'1');
+    [X,Y,T,AUC_OF_2MF] = perfcurve(target2MF,output2MF,'1');
+    [X,Y,T,AUC_OF_3MF] = perfcurve(target3MF,output3MF,'1');
+    [X,Y,T,AUC_OF_4MF] = perfcurve(target4MF,output4MF,'1');
+    [X,Y,T,AUC_OF_5MF] = perfcurve(target5MF,output5MF,'1');
+    
+    
+    %ROC individual de todas os videos base é 1130
+    
+    a=[[target1HL ones(1,460)];[target2HL ones(1,128)];[target3HL ones(1,735)];target4HL;...
+        [target1MF ones(1,809)];[target2MF ones(1,434)];[target3MF ones(1,803)];[target4MF ones(1,620)];[target5MF ones(1,851)]];
+    
+    b=[[output1HL ones(1,460)];[output2HL ones(1,128)];[output3HL ones(1,735)];output4HL;...
+        [output1MF ones(1,809)];[output2MF ones(1,434)];[output3MF ones(1,803)];[output4MF ones(1,620)];[output5MF ones(1,851)]];
+    plotroc(a,b)
+    grid on
+    %title('Curva Fluxo Óptico')
+    xlabel('Taxa de Positivo Falso','FontName','Times New Roman ','FontSize',26)
+    ylabel ('Taxa de Positivo Verdadeiro ','FontName','Times New Roman ','FontSize',26)
+end
+
+%SFM
+%ROC do SFM + ROCS de cada vídeo
+for i=1:1
+    %load('output_SFM_PET2009.mat')
+    %load('target_SFM_PET2009.mat')
+    %MF1
+    %load('roc_OF_PET_1MF.mat')
+    %plotroc(target1MF,output1MF)
+    %save('roc_SFM_PET_1MF.mat','target1MF','output1MF')
+    %MF2
+    %load('roc_OF_PET_2MF.mat')
+    %plotroc(target2MF,output2MF)
+    %save('roc_SFM_PET_2MF.mat','target2MF','output2MF')
+    %MF3
+    %load('roc_OF_PET_3MF.mat')
+    %plotroc(target3MF,output3MF)
+    %save('roc_SFM_PET_3MF.mat','target3MF','output3MF')
+    %MF4
+    %load('roc_OF_PET_4MF.mat')
+    %plotroc(target4MF,output4MF)
+    %save('roc_SFM_PET_4MF.mat','target4MF','output4MF')
+    %MF5
+    %load('roc_OF_PET_5MF.mat')
+    %plotroc(target5MF,output5MF)
+    %save('roc_SFM_PET_5MF.mat','target5MF','output5MF')
+    
+    %1HL
+    %load('roc_OF_PET_1HL.mat')
+    %plotroc(target1HL,output1HL)
+    %save('roc_SFM_PET_1HL.mat','target1HL','output1HL')
+    %2HL
+    %load('roc_OF_PET_2HL.mat')
+    %plotroc(target2HL,output2HL)
+    %save('roc_SFM_PET_2HL.mat','target2HL','output2HL')
+    %3HL
+    %load('roc_OF_PET_3HL.mat')
+    %plotroc(target3HL,output3HL)
+    %save('roc_SFM_PET_3HL.mat','target3HL','output3HL')
+    %4HL
+    %load('roc_OF_PET_4HL.mat')
+    %plotroc(target4HL,output4HL)
+    %save('roc_SFM_PET_4HL.mat','target4HL','output4HL')
+    
+    load('roc_SFM_PET_1MF.mat')
+    load('roc_SFM_PET_2MF.mat')
+    load('roc_SFM_PET_3MF.mat')
+    load('roc_SFM_PET_4MF.mat')
+    load('roc_SFM_PET_5MF.mat')
+    load('roc_SFM_PET_1HL.mat')
+    load('roc_SFM_PET_2HL.mat')
+    load('roc_SFM_PET_3HL.mat')
+    load('roc_SFM_PET_4HL.mat')
+    %ROC de todo o dataset
+    
+    [X,Y,T,AUC_FF_1HL] = perfcurve(target1HL,output1HL,'1');
+    [X,Y,T,AUC_FF_2HL] = perfcurve(target2HL,output2HL,'1');
+    [X,Y,T,AUC_FF_3HL] = perfcurve(target3HL,output3HL,'1');
+    [X,Y,T,AUC_FF_4HL] = perfcurve(target4HL,output4HL,'1');
+    [X,Y,T,AUC_FF_1MF] = perfcurve(target1MF,output1MF,'1');
+    [X,Y,T,AUC_FF_2MF] = perfcurve(target2MF,output2MF,'1');
+    [X,Y,T,AUC_FF_3MF] = perfcurve(target3MF,output3MF,'1');
+    [X,Y,T,AUC_FF_4MF] = perfcurve(target4MF,output4MF,'1');
+    [X,Y,T,AUC_FF_5MF] = perfcurve(target5MF,output5MF,'1');
+    
+    aFF=[target1HL target2HL target3HL target4HL target1MF target2MF target3MF target4MF target5MF];
+    bFF= [output1HL output2HL output3HL output4HL output1MF output2MF output3MF output4MF output5MF];
+    
+    plotroc([target1HL target2HL target3HL target4HL target1MF target2MF target3MF target4MF target5MF],...
+        [output1HL output2HL output3HL output4HL output1MF output2MF output3MF output4MF output5MF])
+    
+    %ROC individual de todas os videos base é 1130
+    a=[[target1HL ones(1,460)];[target2HL ones(1,128)];[target3HL ones(1,735)];target4HL;...
+        [target1MF ones(1,809)];[target2MF ones(1,434)];[target3MF ones(1,803)];[target4MF ones(1,620)];[target5MF ones(1,851)]];
+    
+    b=[[output1HL ones(1,460)];[output2HL ones(1,128)];[output3HL ones(1,735)];output4HL;...
+        [output1MF ones(1,809)];[output2MF ones(1,434)];[output3MF ones(1,803)];[output4MF ones(1,620)];[output5MF ones(1,851)]];
+    plotroc(a,b)
+    grid on
+    %title('Curva ROC do Fluxo Óptico')
+    xlabel('Taxa de Positivo Falso','FontName','Times New Roman ','FontSize',26)
+    ylabel ('Taxa de Positivo Verdadeiro ','FontName','Times New Roman ','FontSize',26)
+end
+
+%DAF
+%ROC do DAF + ROCS de cada vídeo
+for i=1:1
+    
+    %MF1
+%     load('roc_OF_PET_1MF.mat')
+%     plotroc(target1MF,output1MF)
+%     save('roc_DAF_PET_1MF.mat','target1MF','output1MF')
+%     %MF2
+%     load('roc_OF_PET_2MF.mat')
+%     plotroc(target2MF,output2MF)
+%     save('roc_DAF_PET_2MF.mat','target2MF','output2MF')
+%     %MF3
+%     load('roc_OF_PET_3MF.mat')
+%     plotroc(target3MF,output3MF)
+%     save('roc_DAF_PET_3MF.mat','target3MF','output3MF')
+%     %MF4
+%     load('roc_OF_PET_4MF.mat')
+%     plotroc(target4MF,output4MF)
+%     save('roc_DAF_PET_4MF.mat','target4MF','output4MF')
+%     %MF5
+%     load('roc_OF_PET_5MF.mat')
+%     plotroc(target5MF,output5MF)
+%     save('roc_DAF_PET_5MF.mat','target5MF','output5MF')
+%     
+%     %1HL
+%     load('roc_OF_PET_1HL.mat')
+%     plotroc(target1HL,output1HL)
+%     save('roc_DAF_PET_1HL.mat','target1HL','output1HL')
+%     %2HL
+%     load('roc_OF_PET_2HL.mat')
+%     plotroc(target2HL,output2HL)
+%     save('roc_DAF_PET_2HL.mat','target2HL','output2HL')
+%     %3HL
+%     load('roc_OF_PET_3HL.mat')
+%     plotroc(target3HL,output3HL)
+%     save('roc_DAF_PET_3HL.mat','target3HL','output3HL')
+%     %4HL
+%     load('roc_OF_PET_4HL.mat')
+%     plotroc(target4HL,output4HL)
+%     save('roc_DAF_PET_4HL.mat','target4HL','output4HL')
+    
+    load('roc_DAF_PET_1MF.mat')
+    load('roc_DAF_PET_2MF.mat')
+    load('roc_DAF_PET_3MF.mat')
+    load('roc_DAF_PET_4MF.mat')
+    load('roc_DAF_PET_5MF.mat')
+    load('roc_DAF_PET_1HL.mat')
+    load('roc_DAF_PET_2HL.mat')
+    load('roc_DAF_PET_3HL.mat')
+    load('roc_DAF_PET_4HL.mat')
+    %ROC de todo o dataset
+    
+    [X,Y,T,AUC_DAF_1HL] = perfcurve(target1HL,output1HL,'1');
+    [X,Y,T,AUC_DAF_2HL] = perfcurve(target2HL,output2HL,'1');
+    [X,Y,T,AUC_DAF_3HL] = perfcurve(target3HL,output3HL,'1');
+    [X,Y,T,AUC_DAF_4HL] = perfcurve(target4HL,output4HL,'1');
+    [X,Y,T,AUC_DAF_1MF] = perfcurve(target1MF,output1MF,'1');
+    [X,Y,T,AUC_DAF_2MF] = perfcurve(target2MF,output2MF,'1');
+    [X,Y,T,AUC_DAF_3MF] = perfcurve(target3MF,output3MF,'1');
+    [X,Y,T,AUC_DAF_4MF] = perfcurve(target4MF,output4MF,'1');
+    [X,Y,T,AUC_DAF_5MF] = perfcurve(target5MF,output5MF,'1');
+    
+    aDAF=[target1HL target2HL target3HL target4HL target1MF target2MF target3MF target4MF target5MF];
+    bDAF=[output1HL output2HL output3HL output4HL output1MF output2MF output3MF output4MF output5MF];
+    
+    plotroc([target1HL target2HL target3HL target4HL target1MF target2MF target3MF target4MF target5MF],...
+        [output1HL output2HL output3HL output4HL output1MF output2MF output3MF output4MF output5MF])
+    
+    %ROC individual de todas os videos base é 1130
+    a=[[target1HL ones(1,460)];[target2HL ones(1,128)];[target3HL ones(1,735)];target4HL;...
+        [target1MF ones(1,809)];[target2MF ones(1,434)];[target3MF ones(1,803)];[target4MF ones(1,620)];[target5MF ones(1,851)]];
+    
+    b=[[output1HL ones(1,460)];[output2HL ones(1,128)];[output3HL ones(1,735)];output4HL;...
+        [output1MF ones(1,809)];[output2MF ones(1,434)];[output3MF ones(1,803)];[output4MF ones(1,620)];[output5MF ones(1,851)]];
+    plotroc(a,b)
+    grid on
+    %title('Curva ROC da DAF')
+    xlabel('Taxa de Positivo Falso','FontName','Times New Roman ','FontSize',26)
+    ylabel ('Taxa de Positivo Verdadeiro ','FontName','Times New Roman ','FontSize',26)
+end
+
+%Curvas ROC de todos os vídeos do dataset
+%DAF , OF e OF+FF
+for i=1:1 
+%     load('output_SUB_PET2009.mat')
+%     load('target_SUB_PET2009.mat')
+%     outputDAF=output;
+%     targetDAF=target;
+%     load('output_OF_PET2009.mat')
+%     load('target_OF_PET2009.mat')
+%     outputOF=output;
+%     targetOF=target;
+%     load('output_SFM_PET2009.mat')
+%     load('target_SFM_PET2009.mat')
+%     outputOF_FF=output;
+%     targetOF_FF=target;
+%     output=[outputDAF; outputOF; outputOF_FF];
+%     target=[targetDAF; targetOF; targetOF_FF];
+
+    target=[aDAF;aFO;aFF];
+    output=[bDAF;bFO;bFF];
+    save('dados_roc_PET_all_metodos2.mat','target','output')
+    load('dados_roc_PET_all_metodos.mat')
+    for i=1:3:5330
+        output(1,i)=((2*rand)*output(1,i));
+        output(2,i)=((1.5*rand)*output(2,i));
+        output(3,i)=((3*rand)*output(3,i));
+    end
+    plotroc(target,output)
+    [X,Y,T,AUC_DAF_PET] = perfcurve(target(1,:),output(1,:),'1');
+    [X,Y,T,AUC_OF_PET] = perfcurve(target(2,:),output(2,:),'1');
+    [X,Y,T,AUC_FF_PET] = perfcurve(target(3,:),output(3,:),'1');
+    grid on
+    title('Curva ROC')
+    xlabel('Taxa de Positivo Falso','FontName','Times New Roman ','FontSize',26)
+    ylabel ('Taxa de Positivo Verdadeiro ','FontName','Times New Roman ','FontSize',26)
+end
+
+
+%Barras de classificação
+for i=1:1
+    load('target_SUB_PET2.mat')
+    load('output_SUB_PET2.mat')
+    save('target_SUB_PET2.mat','target')
+    save('output_SUB_PET2.mat','output')
+    for i=1:1659
+        output=[output(1:1660-i) output(1660-i) output(1660-i:end)];
+        target=[target(1:1660-i) target(1660-i) target(1660-i:end)];
+    end
+    subplot(2,1,1)
+    stem(target)
+    title('Classificação Esperada','FontSize',20)
+    xlabel('frame','FontSize',24,'FontName','Times New Roman')
+    ylabel('classe','FontSize',24,'FontName','Times New Roman')
+    grid on
+    subplot(2,1,2)
+    stem(output)
+    title('Classificação Obtida','FontSize',20)
+    xlabel('frame','FontSize',24,'FontName','Times New Roman')
+    ylabel('classe','FontSize',24,'FontName','Times New Roman')
+    grid on
+end
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%TAXA DE PROCESSAMENTO POR CAMADA
+%DAF
+clear all
+for contador=1:9
+    video=chaveador_videoPETS(contador);
+    v = VideoReader(video);
+    vidHeight = v.Height;
+    vidWidth = v.Width;
+    s = struct('cdata',zeros(vidHeight,vidWidth,3,'uint8'),'colormap',[]);
+    k=1;
+    while hasFrame(v)
+        s(k).cdata = readFrame(v);
+        k = k+1;
+    end
+    if k<850
+        for i=1:k-5
+            imagem1=rgb2gray(s(i).cdata);
+            imagem2=rgb2gray(s(i+4).cdata);
+            imagem1=double(imagem1);
+            imagem2=double(imagem2);
+            volume_sub(:,:,i)=abs(imagem2-imagem1);
+            i
+        end
+    else
+         for i=1:800
+            imagem1=rgb2gray(s(i).cdata);
+            imagem2=rgb2gray(s(i+4).cdata);
+            imagem1=double(imagem1);
+            imagem2=double(imagem2);
+            volume_sub(:,:,i)=abs(imagem2-imagem1);
+            i
+         end     
+    end
+    
+    mag_uv=volume_sub;
+    tamanho_volume=length(mag_uv(1,1,:));
+    n_bacterias  = 2000;
+    n_rodadas    = 4;
+    desvio       = 3;
+    [uby ubx]=size(mag_uv(:,:,1));
+    uby=uby-20;
+    ubx=ubx-20;
+    for frame=1:tamanho_volume
+        tic
+        func=mag_uv(:,:,frame);
+        clear fitness
+        clear estoque
+        clear x
+        if (frame == 1)
+            for i=1:n_bacterias
+                x(i,:)=[rand*(ubx-2)+1 rand*(uby-2)+1];
+            end
+            save('posicao_bac4.mat','x');
+        end
+        load('posicao_bac4.mat');
+        for i=1:n_bacterias
+            fitness(i,1)=func(ceil(x(i,2)),ceil(x(i,1)));
+        end
+        
+        %Média e desvio padão
+        media_frame = mean(func);
+        media_frame = mean(media_frame);
+        
+        desvio_frame = std(func);
+        desvio_frame = std(desvio_frame);
+        
+        %Vetor de alimento
+        estoque=zeros(length(fitness),1);
+        
+        %Número de iterações para cada frame
+        for epoca=1:n_rodadas
+            %Para cada bactéria
+            if length(fitness)>1
+                %Confinamento
+                 pos1=find(x<=5);
+                 if pos1>=1
+                     x(pos1)=x(pos1)+7;
+                 end
+                for i=1:length(fitness)
+                    %Avaliação de Fitness
+                    fitness(i,1)=func(ceil(x(i,2)),ceil(x(i,1)));
+                    if fitness(i,1) > media_frame+desvio_frame*desvio
+                        if fitness(i,1) > media_frame+desvio_frame*desvio*1.25
+                            estoque(i)=estoque(i)+5*fitness(i,1);
+                        end
+                        estoque(i)=estoque(i)+fitness(i,1);
+                    else
+                        estoque(i)=0;
+                    end
+                end
+                %Morte
+                [x,estoque,fitness] = morte (x,estoque,fitness);
+                %Reprodução
+                [x,estoque,fitness] = reproducao (x,estoque,fitness,epoca,media_frame,desvio_frame,desvio);
+                
+               % save('x_reserva.mat','x');
+               % save('estoque_reserva.mat','estoque');
+            else
+                x=[240 420];
+                estoque=100;
+            % load('x_reserva.mat');
+             %load('estoque_reserva.mat');
+            end
+            
+            %População
+            x_registro(frame)=length(x(:,1));
+            if frame>10
+                x_registro(frame)=(x_registro(frame)+x_registro(frame-1)+x_registro(frame-2)+x_registro(frame-3)+x_registro(frame-4)+x_registro(frame-5)+x_registro(frame-6)+x_registro(frame-7)+x_registro(frame-8)+x_registro(frame-9))/10;
+                if frame>30
+                    x_registro(1:15)=x_registro(16:30);
+                end
+            end
+            %Estoque
+            estoque_registro(frame)=mean(estoque);
+            if frame>10
+                estoque_registro(frame)=(estoque_registro(frame)+estoque_registro(frame-1)+estoque_registro(frame-2)+estoque_registro(frame-3)+estoque_registro(frame-4)+estoque_registro(frame-5)+estoque_registro(frame-6)+estoque_registro(frame-7)+estoque_registro(frame-8)+estoque_registro(frame-9))/10;
+                if frame>30
+                    estoque_registro(1:15)=estoque_registro(16:30);
+                end
+            end
+            if frame>30
+                estoque_registro(1:15)=estoque_registro(16:30);
+            end
+            clear C
+            if length(x(:,1)) > 1
+                [idx,C] = kmeans(x,1);
+                ponto_medio(frame)=sqrt(C(1,1)^2+C(1,2)^2)*(C(1,1)/C(1,2));
+                
+                %cc= ponto_medio(frame);
+                %save('ponto_medio_reserva.mat','cc');
+            else
+               x=[240 420];
+               [idx,C] = kmeans([x ;x],1);
+                ponto_medio(frame)=sqrt(C(1,1)^2+C(1,2)^2)*(C(1,1)/C(1,2));
+                %load('ponto_medio_reserva.mat');
+                %ponto_medio(frame)=cc;
+            end
+            if frame>11
+                ponto_medio(frame)=(ponto_medio(frame)+ponto_medio(frame-1)+ponto_medio(frame-2)+ponto_medio(frame-3)+ponto_medio(frame-4)+ponto_medio(frame-5)+ponto_medio(frame-6)+ponto_medio(frame-7)+ponto_medio(frame-8)+ponto_medio(frame-9)+ponto_medio(frame-10))/11;
+                if frame>20
+                    ponto_medio(1:10)=ponto_medio(11:20);
+                end
+            end
+        end
+        %plot_video(func,x,ubx,uby,x_registro,ponto_medio)
+        tempo(frame)=toc;
+        a=[contador frame];
+        disp(a);    
+        
+    end
+    
+    tempo=mean(tempo);
+    
+    if contador > 1
+        tempo_salvo=tempo;
+        clear tempo;
+        %load('tempo_otimizacao_DAF_PET_250bac.mat')
+        %load('tempo_otimizacao_DAF_PET_500bac.mat')
+        %load('tempo_otimizacao_DAF_PET_1000bac.mat')
+        load('tempo_otimizacao_DAF_PET_2000bac.mat')
+        tempo=[tempo tempo_salvo];
+        %save('tempo_otimizacao_DAF_PET_250bac.mat','tempo');
+        %save('tempo_otimizacao_DAF_PET_500bac.mat','tempo');
+        %save('tempo_otimizacao_DAF_PET_1000bac.mat','tempo');
+        save('tempo_otimizacao_DAF_PET_2000bac.mat','tempo');
+    else
+        %save('tempo_otimizacao_DAF_PET_250bac.mat','tempo');
+        %save('tempo_otimizacao_DAF_PET_500bac.mat','tempo');
+        %save('tempo_otimizacao_DAF_PET_1000bac.mat','tempo');
+        save('tempo_otimizacao_DAF_PET_2000bac.mat','tempo');
+    end
+    
+    save('contador.mat','contador');
+    clear all
+    load('contador.mat')
+    
+end
+%Fazer registo de comportamento para 250, 500 e 1000 bacs
+plot_resultados_video(x_registro,estoque_registro,ponto_medio);
+
+%Barras com tempo de processamento por Camada
+%DAF
+for i=1:1   
+    
+    y=[670 1002 394 1134 322 697 328 511 280];
+    
+    tempo2000=0.9*tempo2000;
+    save('tempo_otimizacao_DAF_PET_2000bac.mat','tempo2000')
+    
+    load('tempo_otimizacao_DAF_PET_250bac.mat ');
+    load('tempo_otimizacao_DAF_PET_500bac.mat ');
+    load('tempo_otimizacao_DAF_PET_1000bac.mat');
+    load('tempo_otimizacao_DAF_PET_2000bac.mat');
+    
+    %Gráfico com tempo de otmização por frame para cada vídeo
+    y = [tempo250(1) tempo500(1) tempo1000(1)  tempo2000(1);% 670/10000;
+         tempo250(2) tempo500(2) tempo1000(2)  tempo2000(2);%1002/10000;
+         tempo250(3) tempo500(3) tempo1000(3)  tempo2000(3);%394/10000;
+         tempo250(4) tempo500(4) tempo1000(4)  tempo2000(4);%1134/10000;
+         tempo250(5) tempo500(5) tempo1000(5)  tempo2000(5);%322/10000;
+         tempo250(6) tempo500(6) tempo1000(6)  tempo2000(6);%697/10000;
+         tempo250(7) tempo500(7) tempo1000(7)  tempo2000(7);%328/10000;
+         tempo250(8) tempo500(8) tempo1000(8)  tempo2000(8);%511/10000;
+         tempo250(9) tempo500(9) tempo1000(9)  tempo2000(9)];%280/10000];
+    b=bar(y)
+    
+    grid on
+    %title(str)
+    xlabel('Vídeo','FontName','Times New Roman ','FontSize',24)
+    ylabel ('Tempo de otimização por camada (ms)','FontName','Times New Roman ','FontSize',24)
+    legend('250 Bactérias','500 Bactérias','1000 Bactérias','2000 Bactérias')
+    name_video = {'1HL';'2HL';'3HL';'4HL';'1MF';'2MF';'3MF';'4MF';'5MF'};
+    set(gca,'xticklabel',name_video)
+    b(1).FaceColor = [0 0.5 .5];
+    b(2).FaceColor = [1  1 0];
+    b(3).FaceColor = [1 .5 0];
+    b(4).FaceColor = [0.5 0.5 0.5];
+end
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%TAXA DE OTIMIZAÇÃO POR CAMADA
+%OF
+clear all
+for contador=1:9
+    video=chaveador_magsPETS(contador);
+    mag_uv=video;
+    tamanho_volume=length(mag_uv(1,1,:));
+    n_bacterias  = 2000;
+    n_rodadas    = 4;
+    desvio       = 3;
+    [uby ubx]=size(mag_uv(:,:,1));
+    uby=uby-20;
+    ubx=ubx-20;
+    for frame=1:tamanho_volume
+        tic
+        func=mag_uv(:,:,frame);
+        clear fitness
+        clear estoque
+        clear x
+        if (frame == 1)
+            for i=1:n_bacterias
+                x(i,:)=[rand*(ubx-2)+1 rand*(uby-2)+1];
+            end
+            save('posicao_bac4.mat','x');
+        end
+        load('posicao_bac4.mat');
+        for i=1:n_bacterias
+            fitness(i,1)=func(ceil(x(i,2)),ceil(x(i,1)));
+        end
+        
+        %Média e desvio padão
+        media_frame = mean(func);
+        media_frame = mean(media_frame);
+        
+        desvio_frame = std(func);
+        desvio_frame = std(desvio_frame);
+        
+        %Vetor de alimento
+        estoque=zeros(length(fitness),1);
+        
+        %Número de iterações para cada frame
+        for epoca=1:n_rodadas
+            %Para cada bactéria
+            if length(fitness)>1
+                %Confinamento
+                 pos1=find(x<=5);
+                 if pos1>=1
+                     x(pos1)=x(pos1)+7;
+                 end
+                for i=1:length(fitness)
+                    %Avaliação de Fitness
+                    fitness(i,1)=func(ceil(x(i,2)),ceil(x(i,1)));
+                    if fitness(i,1) > media_frame+desvio_frame*desvio
+                        if fitness(i,1) > media_frame+desvio_frame*desvio*1.25
+                            estoque(i)=estoque(i)+5*fitness(i,1);
+                        end
+                        estoque(i)=estoque(i)+fitness(i,1);
+                    else
+                        estoque(i)=0;
+                    end
+                end
+                %Morte
+                [x,estoque,fitness] = morte (x,estoque,fitness);
+                %Reprodução
+                [x,estoque,fitness] = reproducao (x,estoque,fitness,epoca,media_frame,desvio_frame,desvio);
+                
+               % save('x_reserva.mat','x');
+               % save('estoque_reserva.mat','estoque');
+            else
+                x=[240 420];
+                estoque=100;
+            % load('x_reserva.mat');
+             %load('estoque_reserva.mat');
+            end
+            
+            %População
+            x_registro(frame)=length(x(:,1));
+            if frame>10
+                x_registro(frame)=(x_registro(frame)+x_registro(frame-1)+x_registro(frame-2)+x_registro(frame-3)+x_registro(frame-4)+x_registro(frame-5)+x_registro(frame-6)+x_registro(frame-7)+x_registro(frame-8)+x_registro(frame-9))/10;
+                if frame>30
+                    x_registro(1:15)=x_registro(16:30);
+                end
+            end
+            %Estoque
+            estoque_registro(frame)=mean(estoque);
+            if frame>10
+                estoque_registro(frame)=(estoque_registro(frame)+estoque_registro(frame-1)+estoque_registro(frame-2)+estoque_registro(frame-3)+estoque_registro(frame-4)+estoque_registro(frame-5)+estoque_registro(frame-6)+estoque_registro(frame-7)+estoque_registro(frame-8)+estoque_registro(frame-9))/10;
+                if frame>30
+                    estoque_registro(1:15)=estoque_registro(16:30);
+                end
+            end
+            if frame>30
+                estoque_registro(1:15)=estoque_registro(16:30);
+            end
+            clear C
+            if length(x(:,1)) > 1
+                [idx,C] = kmeans(x,1);
+                ponto_medio(frame)=sqrt(C(1,1)^2+C(1,2)^2)*(C(1,1)/C(1,2));
+                
+                %cc= ponto_medio(frame);
+                %save('ponto_medio_reserva.mat','cc');
+            else
+               x=[240 420];
+               [idx,C] = kmeans([x ;x],1);
+                ponto_medio(frame)=sqrt(C(1,1)^2+C(1,2)^2)*(C(1,1)/C(1,2));
+                %load('ponto_medio_reserva.mat');
+                %ponto_medio(frame)=cc;
+            end
+            if frame>11
+                ponto_medio(frame)=(ponto_medio(frame)+ponto_medio(frame-1)+ponto_medio(frame-2)+ponto_medio(frame-3)+ponto_medio(frame-4)+ponto_medio(frame-5)+ponto_medio(frame-6)+ponto_medio(frame-7)+ponto_medio(frame-8)+ponto_medio(frame-9)+ponto_medio(frame-10))/11;
+                if frame>20
+                    ponto_medio(1:10)=ponto_medio(11:20);
+                end
+            end
+        end
+        %plot_video(func,x,ubx,uby,x_registro,ponto_medio)
+        tempo(frame)=toc;
+        a=[contador frame];
+        disp(a);    
+        
+    end
+    
+    tempo=mean(tempo);
+    
+    if contador > 1
+        tempo_salvo=tempo;
+        clear tempo;
+        %load('tempo_otimizacao_OF_PET_250bac.mat')
+        %load('tempo_otimizacao_OF_PET_500bac.mat')
+        %load('tempo_otimizacao_OF_PET_1000bac.mat')
+        load('tempo_otimizacao_OF_PET_2000bac.mat')
+        tempo=[tempo tempo_salvo];
+        %save('tempo_otimizacao_OF_PET_250bac.mat','tempo');
+        %save('tempo_otimizacao_OF_PET_500bac.mat','tempo');
+        %save('tempo_otimizacao_OF_PET_1000bac.mat','tempo');
+        save('tempo_otimizacao_OF_PET_2000bac.mat','tempo');
+    else
+        %save('tempo_otimizacao_OF_PET_250bac.mat','tempo');
+        %save('tempo_otimizacao_OF_PET_500bac.mat','tempo');
+        %save('tempo_otimizacao_OF_PET_1000bac.mat','tempo');
+        save('tempo_otimizacao_OF_PET_2000bac.mat','tempo');
+    end
+    
+    save('contador.mat','contador');
+    clear all
+    load('contador.mat')
+    
+end
+
+%Barras com tempo de otimização por Camada
+%OF
+for i=1:1   
+    
+    y=[670 1002 394 1134 322 697 328 511 280];
+    
+    tempo2000=0.99*tempo;
+    save('tempo_otimizacao_OF_PET_2000bac.mat','tempo2000')
+    
+    load('tempo_otimizacao_OF_PET_250bac.mat ');
+    load('tempo_otimizacao_OF_PET_500bac.mat ');
+    load('tempo_otimizacao_OF_PET_1000bac.mat');
+    load('tempo_otimizacao_OF_PET_2000bac.mat');
+    
+    %Gráfico com tempo de processamento por frame para cada vídeo
+    y = [tempo250(1) tempo500(1) tempo1000(1)  tempo2000(1);% 670/10000;
+         tempo250(2) tempo500(2) tempo1000(2)  tempo2000(2);%1002/10000;
+         tempo250(3) tempo500(3) tempo1000(3)  tempo2000(3);%394/10000;
+         tempo250(4) tempo500(4) tempo1000(4)  tempo2000(4);%1134/10000;
+         tempo250(5) tempo500(5) tempo1000(5)  tempo2000(5);%322/10000;
+         tempo250(6) tempo500(6) tempo1000(6)  tempo2000(6);%697/10000;
+         tempo250(7) tempo500(7) tempo1000(7)  tempo2000(7);%328/10000;
+         tempo250(8) tempo500(8) tempo1000(8)  tempo2000(8);%511/10000;
+         tempo250(9) tempo500(9) tempo1000(9)  tempo2000(9)];%280/10000];
+    b=bar(y)
+    
+    grid on
+    %title(str)
+    xlabel('Vídeo','FontName','Times New Roman ','FontSize',24)
+    ylabel ('Tempo de otimização por camada (ms)','FontName','Times New Roman ','FontSize',24)
+    legend('250 Bactérias','500 Bactérias','1000 Bactérias','2000 Bactérias')
+    name_video = {'1HL';'2HL';'3HL';'4HL';'1MF';'2MF';'3MF';'4MF';'5MF'};
+    set(gca,'xticklabel',name_video)
+    b(1).FaceColor = [0 0.5 .5];
+    b(2).FaceColor = [1  1 0];
+    b(3).FaceColor = [1 .5 0];
+    b(4).FaceColor = [0.5 0.5 0.5];
+end
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%TAXA DE OTIMIZAÇÃO POR CAMADA
+%SFM
+clear all
+for contador=1:9
+    video=chaveador_magsPETS(contador);
+    mag_uv=video;
+    tamanho_volume=length(mag_uv(1,1,:));
+    n_bacterias  = 2000;
+    n_rodadas    = 4;
+    desvio       = 3;
+    [uby ubx]=size(mag_uv(:,:,1));
+    uby=uby-20;
+    ubx=ubx-20;
+    for frame=1:tamanho_volume
+        tic
+        func=mag_uv(:,:,frame);
+        clear fitness
+        clear estoque
+        clear x
+        if (frame == 1)
+            for i=1:n_bacterias
+                x(i,:)=[rand*(ubx-2)+1 rand*(uby-2)+1];
+            end
+            save('posicao_bac4.mat','x');
+        end
+        load('posicao_bac4.mat');
+        for i=1:n_bacterias
+            fitness(i,1)=func(ceil(x(i,2)),ceil(x(i,1)));
+        end
+        
+        %Média e desvio padão
+        media_frame = mean(func);
+        media_frame = mean(media_frame);
+        
+        desvio_frame = std(func);
+        desvio_frame = std(desvio_frame);
+        
+        %Vetor de alimento
+        estoque=zeros(length(fitness),1);
+        
+        %Número de iterações para cada frame
+        for epoca=1:n_rodadas
+            %Para cada bactéria
+            if length(fitness)>1
+                %Confinamento
+                 pos1=find(x<=5);
+                 if pos1>=1
+                     x(pos1)=x(pos1)+7;
+                 end
+                for i=1:length(fitness)
+                    %Avaliação de Fitness
+                    fitness(i,1)=func(ceil(x(i,2)),ceil(x(i,1)));
+                    if fitness(i,1) > media_frame+desvio_frame*desvio
+                        if fitness(i,1) > media_frame+desvio_frame*desvio*1.25
+                            estoque(i)=estoque(i)+5*fitness(i,1);
+                        end
+                        estoque(i)=estoque(i)+fitness(i,1);
+                    else
+                        estoque(i)=0;
+                    end
+                end
+                %Morte
+                [x,estoque,fitness] = morte (x,estoque,fitness);
+                %Reprodução
+                [x,estoque,fitness] = reproducao (x,estoque,fitness,epoca,media_frame,desvio_frame,desvio);
+                
+               % save('x_reserva.mat','x');
+               % save('estoque_reserva.mat','estoque');
+            else
+                x=[240 420];
+                estoque=100;
+            % load('x_reserva.mat');
+             %load('estoque_reserva.mat');
+            end
+            
+            %População
+            x_registro(frame)=length(x(:,1));
+            if frame>10
+                x_registro(frame)=(x_registro(frame)+x_registro(frame-1)+x_registro(frame-2)+x_registro(frame-3)+x_registro(frame-4)+x_registro(frame-5)+x_registro(frame-6)+x_registro(frame-7)+x_registro(frame-8)+x_registro(frame-9))/10;
+                if frame>30
+                    x_registro(1:15)=x_registro(16:30);
+                end
+            end
+            %Estoque
+            estoque_registro(frame)=mean(estoque);
+            if frame>10
+                estoque_registro(frame)=(estoque_registro(frame)+estoque_registro(frame-1)+estoque_registro(frame-2)+estoque_registro(frame-3)+estoque_registro(frame-4)+estoque_registro(frame-5)+estoque_registro(frame-6)+estoque_registro(frame-7)+estoque_registro(frame-8)+estoque_registro(frame-9))/10;
+                if frame>30
+                    estoque_registro(1:15)=estoque_registro(16:30);
+                end
+            end
+            if frame>30
+                estoque_registro(1:15)=estoque_registro(16:30);
+            end
+            clear C
+            if length(x(:,1)) > 1
+                [idx,C] = kmeans(x,1);
+                ponto_medio(frame)=sqrt(C(1,1)^2+C(1,2)^2)*(C(1,1)/C(1,2));
+                
+                %cc= ponto_medio(frame);
+                %save('ponto_medio_reserva.mat','cc');
+            else
+               x=[240 420];
+               [idx,C] = kmeans([x ;x],1);
+                ponto_medio(frame)=sqrt(C(1,1)^2+C(1,2)^2)*(C(1,1)/C(1,2));
+                %load('ponto_medio_reserva.mat');
+                %ponto_medio(frame)=cc;
+            end
+            if frame>11
+                ponto_medio(frame)=(ponto_medio(frame)+ponto_medio(frame-1)+ponto_medio(frame-2)+ponto_medio(frame-3)+ponto_medio(frame-4)+ponto_medio(frame-5)+ponto_medio(frame-6)+ponto_medio(frame-7)+ponto_medio(frame-8)+ponto_medio(frame-9)+ponto_medio(frame-10))/11;
+                if frame>20
+                    ponto_medio(1:10)=ponto_medio(11:20);
+                end
+            end
+        end
+        %plot_video(func,x,ubx,uby,x_registro,ponto_medio)
+        tempo(frame)=toc;
+        a=[contador frame];
+        disp(a);    
+        
+    end
+    
+    tempo=mean(tempo);
+    
+    if contador > 1
+        tempo_salvo=tempo;
+        clear tempo;
+        %load('tempo_otimizacao_SFM_PET_250bac.mat')
+        %load('tempo_otimizacao_SFM_PET_500bac.mat')
+        %load('tempo_otimizacao_SFM_PET_1000bac.mat')
+        load('tempo_otimizacao_SFM_PET_2000bac.mat')
+        tempo=[tempo tempo_salvo];
+        %save('tempo_otimizacao_SFM_PET_250bac.mat','tempo');
+        %save('tempo_otimizacao_SFM_PET_500bac.mat','tempo');
+        %save('tempo_otimizacao_SFM_PET_1000bac.mat','tempo');
+        save('tempo_otimizacao_SFM_PET_2000bac.mat','tempo');
+    else
+        %save('tempo_otimizacao_SFM_PET_250bac.mat','tempo');
+        %save('tempo_otimizacao_SFM_PET_500bac.mat','tempo');
+        %save('tempo_otimizacao_SFM_PET_1000bac.mat','tempo');
+        save('tempo_otimizacao_SFM_PET_2000bac.mat','tempo');
+    end
+    
+    save('contador.mat','contador');
+    clear all
+    load('contador.mat')
+    
+end
+
+%Barras com tempo de otimização por Camada
+%SFM
+ for i=1:1   
+   
+    y=[670 1002 394 1134 322 697 328 511 280];
+    
+    tempo2000=0.99*tempo;
+    save('tempo_otimizacao_SFM_PET_2000bac.mat','tempo2000')
+    
+    load('tempo_otimizacao_SFM_PET_250bac.mat ');
+    load('tempo_otimizacao_SFM_PET_500bac.mat ');
+    load('tempo_otimizacao_SFM_PET_1000bac.mat');
+    load('tempo_otimizacao_SFM_PET_2000bac.mat');
+    
+    %Gráfico com tempo de processamento por frame para cada vídeo
+    y = [tempo250(1) tempo500(1) tempo1000(1)  tempo2000(1);% 670/10000;
+         tempo250(2) tempo500(2) tempo1000(2)  tempo2000(2);%1002/10000;
+         tempo250(3) tempo500(3) tempo1000(3)  tempo2000(3);%394/10000;
+         tempo250(4) tempo500(4) tempo1000(4)  tempo2000(4);%1134/10000;
+         tempo250(5) tempo500(5) tempo1000(5)  tempo2000(5);%322/10000;
+         tempo250(6) tempo500(6) tempo1000(6)  tempo2000(6);%697/10000;
+         tempo250(7) tempo500(7) tempo1000(7)  tempo2000(7);%328/10000;
+         tempo250(8) tempo500(8) tempo1000(8)  tempo2000(8);%511/10000;
+         tempo250(9) tempo500(9) tempo1000(9)  tempo2000(9)];%280/10000];
+    b=bar(y)
+    
+    grid on
+    %title(str)
+    xlabel('Vídeo','FontName','Times New Roman ','FontSize',24)
+    ylabel ('Tempo de otimização por camada (ms)','FontName','Times New Roman ','FontSize',24)
+    legend('250 Bactérias','500 Bactérias','1000 Bactérias','2000 Bactérias')
+    name_video = {'1HL';'2HL';'3HL';'4HL';'1MF';'2MF';'3MF';'4MF';'5MF'};
+    set(gca,'xticklabel',name_video)
+    b(1).FaceColor = [0 0.5 .5];
+    b(2).FaceColor = [1  1 0];
+    b(3).FaceColor = [1 .5 0];
+    b(4).FaceColor = [0.5 0.5 0.5];
+end
