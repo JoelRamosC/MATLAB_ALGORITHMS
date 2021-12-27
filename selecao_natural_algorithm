@@ -1,0 +1,60 @@
+%Gerando indivíduos da população inicial
+
+n=200;                                 %número de indivíduos
+m=1;                                 %número de gerações
+target=1.9;                         %valor desejado
+gene_size=10;                        %tamanho do gene
+lim_inf=0;                           %limite inferior do dominio de busca
+lim_sup=1023;                        %limite superior do dominio de busca
+pop_inicial = randi(lim_sup,n,1);    %população inicial em dicimais
+
+%u = idinput (gene_size,'rbs',[0, 1],[0, 1])'; %para pseudo ruido usar 'prbs'
+
+pop_dec(:,1)=pop_inicial; 
+
+%Função de avaliação
+for g=1:m
+    
+    for k=1:n
+       %Conversão de individuo  para tensão 
+       individuo(k)=pop_dec(k,1); 
+       ind_tensao(k)=(5*individuo(k))/1024; %conversão a ser feita no arduino
+       a.analogWrite(3,ceil(individuo(k)/4));  % aplica a tensão na base do transistor t1
+       
+       
+       %Função de avaliação
+       % out(k)=func_avaliacao(ind_tensao(k)); 
+       for j=1:200
+          rascunho(j,1)=a.analogRead(0);
+       end  
+       
+       out(1,k)=(mean(rascunho(1:100,1))*5)/1024;
+       
+       
+       
+       %Aptão
+       aptdao(k)=out(k) - target;
+       ind_sol(k,1)= ind_tensao(k);
+       ind_sol(k,2)= aptdao(k);     
+       
+       %Conversão dos indivíduos para binário
+       ind_bin(k,:)=de2bi(individuo(k),gene_size);
+       
+       %Criação de matriz da geração com individuo/aptdao
+       G(k,:,g)=[abs(aptdao(k)) ind_bin(k,:) aptdao(k) individuo(k) ind_tensao(k) out(k)];
+       
+       
+       
+       %G=sortrows(G);
+       
+           
+       %Seleção dos melhores 
+    end 
+end
+
+       % envia valor de tensão para o arduino
+
+       % recebe valor de tensão do arduino/circuito
+
+       % É estipulado um valor desejado para ser atingido na saída(target)
+
