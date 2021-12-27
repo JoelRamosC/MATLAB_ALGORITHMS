@@ -1,0 +1,106 @@
+%demorn9
+%treinar uma rede neural para realizar uma
+% classificação.
+
+
+%1 - Fornecer os pares de treinamento. O arquivo a ser carregado apresenta
+%duas matrizes: dados e labels. dados é uma matriz m x n , onde m é o
+%numero de pontos e n é o numero de variaveis. labels e uma matriz m x 1 e
+%contem os diferentes labels que devem estar entre 1 e maxlabel
+
+%load high300.mat
+
+%  ___load sallen.mat
+load para_treino_33_coeficientes.mat
+dados=getdata(TreinoFourier);
+labels=getlabels(TreinoFourier);
+
+
+
+%___ dados=p';
+%___labels = t'+1;
+
+
+maxlabel=max(labels);
+t=zeros(size(dados,1),maxlabel);
+
+for i=1:size(dados,1)
+    ltemp=labels(i,:);
+    t(i,ltemp)=1;
+end;
+p=dados';
+t=t';
+
+%2 - Determinar o numero de neuronios na camada interna e o numero de saidas 
+
+neurons=10;
+nout = maxlabel;                      % numero de saidas  = 2
+
+
+
+
+%3 - Dividir o conjunto de dados em treinamento, validação e teste
+
+valPercent = 0.2;
+testPercent = 0.2;
+
+[trS, cvS, tstS] = dividevec(p, t, valPercent, testPercent);
+
+
+%4 - Fazer a normalização dos dados de entrada
+%    a normalização deve ser feita a partir de dos dados de treinamento
+
+
+%5 - criar a rede usando o metodo de treinamento apropriado
+% 
+
+metodo_treino= 'trainlm';
+net = newff(minmax(trS.P),[neurons nout],{'tansig','logsig'},metodo_treino); 
+
+%6 - Treinar a Rede
+net = train(net, trS.P, trS.T, [], [], cvS, tstS);
+
+
+%7 - Testando o classificador 
+
+%Erro no Treino
+if (~isempty(trS.P))
+    out = sim(net, trS.P);
+    [y_out,I_out] = max(out);
+    [y_t,I_t] = max(trS.T);
+    N = size(trS.P,2);               % 
+    cm=cfmatrix(I_t,I_out)
+    fprintf('Numero de amostras no treino: %d\n', N);
+    fprintf('Porcentagem de acerto no treino: %g \n', 100*sum(diag(cm))/N);
+%     figure;
+%     plota_grupos(trS.P',I_t');
+%     hold on;
+%     plota_grupos(trS.P',I_out');
+   
+end
+
+%Erro na validação
+if (~isempty(cvS.P))
+    out = sim(net, cvS.P);
+    [y_out,I_out] = max(out);
+    [y_t,I_t] = max(cvS.T);
+    N = size(cvS.P,2);               % 
+    cm=cfmatrix(I_t,I_out)
+    fprintf('Numero de amostras na validação: %d\n', N);
+    fprintf('Porcentagem de acerto na validação: %g \n', 100*sum(diag(cm))/N);
+     
+    
+    
+end
+
+%Erro no Teste
+if (~isempty(tstS.P))
+    out = sim(net, tstS.P);             %testa a rede
+    [y_out,I_out] = max(out);
+    [y_t,I_t] = max(tstS.T);
+    N = size(tstS.P,2);               % Numero de amostras de teste
+    cm=cfmatrix(I_t,I_out)             %Matriz de confusão do teste
+    fprintf('Numero de amostras no teste: %d\n', N);
+    fprintf('Porcentagem de acerto no teste: %g \n', 100*sum(diag(cm))/N);
+end
+
