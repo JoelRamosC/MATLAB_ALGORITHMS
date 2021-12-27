@@ -1,0 +1,46 @@
+im=imread('rafale1.jpg');
+im=rgb2gray(im);
+imshow(im)
+
+temp=imread('template_rafale1.jpg');
+temp=rgb2gray(temp);
+imshow(temp)
+
+[y,x]=size(im);
+[w,z]=size(temp);
+
+% im=double(im);
+% temp=double(temp);
+
+%Modo exaustivo
+it=1;
+it2=1;
+correlacao=[ ];
+chave=1;
+
+    for i=1:y-w  %i=1 até 4  linha - eixo y
+        for j=1:x-z %j=1 até 7  coluna - eixo x
+            %Recorta Patch da Imagem
+            for k=1:w  %k=1 até 8, 2 até 9 etc para linhas eixo y
+                for l=1:z %l=1 até 11, 2 até 12 etc para colunas  - eixo x
+                    patch(k,l)=im(k+i-1,l+j-1);
+                    it=it+1
+                end
+            end
+            corre=corr2(patch,temp);
+%             if corre >= 0.99
+%                 chave=0;
+%             end
+%             imshow(patch)
+%             pause(0.0000000000000000001)
+            correlacao=[correlacao corre];
+            graf_correlacao(i,j)=corre;
+            it2=it2+1;
+        end
+    end
+
+%Resultados
+
+
+
+
