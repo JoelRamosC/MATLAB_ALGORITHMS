@@ -1,0 +1,59 @@
+%Rede de Kohonen
+
+%Topologies (gridtop, hextop, randtop)
+%Rede Quadriculada
+%pos = gridtop(2,3);
+%plotsom(pos)
+%Rede Hexagonal
+%pos = hextop(3,3);
+%plotsom(pos)
+%Rede Randomica
+%pos = randtop(8,10);
+%plotsom(pos)
+
+%Distance Functions (dist, linkdist, mandist, boxdist)
+% pos2 = [0 1 2      % 3 neurônios
+%        0 1 2]; 
+% d = dist(pos2);    %Distância Euclidiana
+% d = boxdist(pos);  %Distância associada ao estado de vizinhança
+% d = linkdist(pos); %Distância associada número de passos
+
+%Create a Self-Organizing Map Neural Network (selforgmap)
+%http://www.mathworks.com/help/nnet/ug/cluster-with-self-organizing-map-neural-network.html
+
+%Suppose that you want to create a network having input vectors with two elements,
+%and that you want to have six neurons in a hexagonal 2-by-3 network. 
+%The code to obtain this network is:
+
+net = selforgmap([10,10]);
+
+%Criar conjunto de dados 
+%P = 10*rands(2,1000)*(0.5-rand());
+
+%You can configure the network to input the data and plot all of this with:
+net = configure(net,P);
+plotsompos(net,P)
+
+%The green spots are the training vectors. The initialization for selforgmap 
+%spreads the initial weights across the input space. Note that they are initially 
+%some distance from the training vectors.
+
+%When simulating a network, the negative distances between each
+%neuron's weight vector and the input vector are calculated (negdist)
+%to get the weighted inputs. The weighted inputs are also the net inputs (netsum). 
+%The net inputs compete (compet) so that only the neuron with the most positive net 
+%input will output a 1.
+
+net.trainParam.epochs = 1000;
+net = train(net,P);
+plotsompos(net,P)
+
+%You can see that the neurons have started to move toward the various training groups. 
+%Additional training is required to get the neurons closer to the various groups.
+
+a = sim(net,P_test); %Resultado para conjunto de teste
+ac = vec2ind(a);     %Realiza a classificação 
+
+
+net.IW{1,1} %Mostra os pesos 
+net.b{1}    %Mostra os pesos das bias
