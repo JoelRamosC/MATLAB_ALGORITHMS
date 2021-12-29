@@ -1,0 +1,124 @@
+clc
+% clear all
+close all
+load('mag_uv_OF_5MF.mat')
+N=200;
+d=2;
+
+
+delta=0.008; %velocidade de ataque
+c1=0.5;       %separação   0.1 - Melhores valores
+c2=0.4;       %coesão      0.4
+c3=1.1;       %alinhamento 1.1
+c4=10;        %liderança
+
+X=200;
+V=0.0001;
+x=ceil(X*rand(N,d));     %Um único vetor para posição x,y e a velocidade v
+v=V*rand(N,d);
+
+m_base=[0  0  0  0  0  0  0  0  0  0;
+        0  1  1  1  1  1  1  1  1  0;
+        0  1  2  2  2  2  2  2  1  0;
+        0  1  2  3  3  3  3  2  1  0;
+        0  1  2  4  4  4  3  2  1  0;
+        0  1  1  4  5  4  1  1  1  0;
+        0  1  1  4  4  4  1  1  1  0;
+        0  0  1  1  1  1  1  1  0  0;
+        0  0  0  1  1  1  1  0  0  0;
+        0  0  0  0  0  0  0  0  0  0];
+
+
+func=flow_mag_filter;%(:,:,500);
+gbest=0;
+p=zeros(N,d);
+
+for i=1:N
+    pbest(i,1)=func(x(i,2),x(i,1)); % coluna da matriz é a coordenada x e linha é a coordenada y
+    p(i,:)= x(i,:);
+    if pbest(i,1) > gbest
+        gbest = pbest(i,1);
+        g = p(i,:);
+    end
+end
+
+
+for k=1:1000000
+    for frame=1:160
+        
+        gbest=gbest*0.95; %Decaimento do gbest para cada frame
+        pbest=pbest*0.9;  %Decaimento do pbest para cada frame
+        
+        func=flow_mag_filter(:,:,frame); %Define função objetiva para cada frame
+        
+        a =zeros(N,d);  %Zera matriz de acelerações do flocking para cada frame
+        a4=zeros(N,d);  %Zera matriz da regra 4 para cada frame
+        for i=2:N
+            %Zera vetor a das regras para cada indivíduo
+            a1=zeros(N,d);
+            a2=zeros(N,d);
+            a3=zeros(N,d); 
+            for m=1:N
+                if (m ~= i)
+                    r = x(m,:)-x(i,:);               % Posição atual menos a posição seguinte, acha variação
+                    vr = v(m,:)-v(i,:);              % velocidade atual menos a velocidade seguinte - deslocamento no plano
+                    rmag=sqrt(r(1,1)^2+r(1,2)^2);    % Distância entre os pontos apenas do primeiro!!
+                   
+                    a1(i,:) = a1(i,:) - c1*r/rmag^2; %  Separação
+                    a2(i,:) = a2(i,:) + c2*r;        %  coesão
+                    a3(i,:) = a3(i,:) + c3*vr;       %  alinhamento   
+                end
+            end
+            
+            rr= x(i,:)-g; %Calcula a diferença da posição entre o indivíduo i e o gbest
+            obmag=sqrt(rr(1,1)^2+rr(1,2)^2); %Calcula a distância entre i e  gbest
+            a4(i,:) = a4(i,:)-c4*rr/obmag;  %Atribui uma aceleração para fazer o indivíduo i convergir para gbest
+           
+            a(i,:)= a1(i,:) + a2(i,:)/(N-1)+ (a3(i,:)/(N-1))+a4(i,:); %Somatório das regras
+            v = v + a*delta ;  % Atualiza velocidades
+            x = x + v*delta;   % Atualiza posições
+            
+            x(i,:)=fix(x(i,:)); %confinamento
+            if x(i,2)<=0
+                x(i,2)=50;
+            end
+            if x(i,1)<=0
+                x(i,1)=50;
+            end
+            
+            if x(i,1)>=200
+                x(i,1)=150;
+            end
+            if x(i,2)>=200
+                x(i,2) =150;
+            end
+            
+            %Avalia o fitness do indivíduo i
+            fitness =func(x(i,2),x(i,1));
+            if fitness > pbest(i)
+                pbest(i) = fitness;
+                p(i,:)= x(i,:);
+            end
+            if pbest(i) > gbest
+                gbest = pbest(i);
+                g = p(i,:);
+            end
+            gbest
+        end
+        %contour(func)
+        imagesc(func)
+        hold on
+        plot(x(:,1),x(:,2),'r*');
+        plot(g(:,1),g(:,2),'k^'); %Lider
+        hold off
+        axis([0 200 0 200]);
+        %axis equal
+        pause(0.0000001)
+        %pause(1)
+    end
+end
+% y=zeros(100,1);
+% y(1,1)=100;
+% for i=2:100
+%     y(i)=y(i-1)*0.5;
+% end
