@@ -1,0 +1,55 @@
+clc
+clear all
+close all
+load('mag_uv_OF_5MF.mat')
+N=50;
+d=2;
+
+delta=0.008;  %velocidade de ataque
+c1=0.5;       %separação   0.1 - Melhores valores
+c2=0.4;       %coesão      0.4
+c3=1.1;       %alinhamento 1.1
+c4=10;        %liderança
+
+X=200;
+V=0.0001;
+x=fix(X*rand(N,d));     %Um único vetor para posição x,y e a velocidade v
+v=V*rand(N,d);
+
+func=flow_mag_filter;
+[uby ubx]=size(func);
+gbest=0;
+p=zeros(N,d);
+
+%Inicializa
+[p,g,pbest,gbest]=inicializa(N,x,gbest,p,func,i);
+
+while (true)
+    for frame=1:165
+        gbest=gbest*0.95; 
+        pbest=pbest*0.9;  
+        func=flow_mag_filter(:,:,frame); 
+        a =zeros(N,d);  %Zera matriz de acelerações do flocking para cada frame
+        a4=zeros(N,d);  %Zera matriz da regra 4 para cada frame
+        for i=1:N
+            %Zera vetor a das regras para cada indivíduo
+            a1=zeros(N,d);
+            a2=zeros(N,d);
+            a3=zeros(N,d); 
+            %Estigmergia
+            [a1,a2,a3] =flocking(N,x,a1,a2,a3,v,i,c1,c2,c3);
+            %Lider
+            [a4] =lider(x,g,i,a4,c4);
+            %Atualiza
+            a(i,:)= a1(i,:) + a2(i,:)/(N-1)+ (a3(i,:)/(N-1))+a4(i,:); 
+            v = v + a*delta ;  
+            x = x + v*delta;   
+            x(i,:)=fix(x(i,:));
+            %Confinamento
+            [x] = confinamento(x,uby,i);
+            %Avalia o fitness do indivíduo i
+            [p,g,gbest,pbest] = fitness(x,p,g,pbest,gbest,func,i);
+        end
+        visualizacao(x,func,g,uby); 
+    end
+end
