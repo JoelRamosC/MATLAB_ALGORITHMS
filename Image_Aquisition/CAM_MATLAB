@@ -1,0 +1,10 @@
+img = snapshot(cam);
+
+cam = webcam
+cam = webcam(devicenumber)
+cam = webcam('cameraname')
+
+Preview(cam)
+closePreview(cam)
+
+img = snapshot(cam);
